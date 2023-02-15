@@ -8,13 +8,15 @@ import com.google.gson.JsonElement;
 public class RallyItem {
     private String ID;
     private JsonElement fields;
+    private String type;
 
     public RallyItem(String id) {
         setID(id);
     }
-    public RallyItem(String id, JsonElement fields) {
+    public RallyItem(String id, JsonElement fields, String type) {
         setID(id);
         setFields(fields);
+        setType(type);
     }
 
 
@@ -32,5 +34,12 @@ public class RallyItem {
 
     public void setFields(JsonElement fields) {
         this.fields = fields;
+    }
+
+    public String getType() {
+        return type;
+    }
+    public void setType(String type) {
+        this.type = type;
     }
 }
