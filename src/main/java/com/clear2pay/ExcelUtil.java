@@ -154,7 +154,11 @@ public class ExcelUtil {
     }
 
     private String getAddress(RallyItem rallyItem) {
-        return "https://www.youtube.com/watch?v=xm3YgoEiEDc";
+        return "https://rally1.rallydev.com/#/?detail=/" + rallyItem.getType() + "/" + getObjectID(rallyItem) + "&fdp=true";
+    }
+
+    private String getObjectID(RallyItem rallyItem) {
+       return rallyItem.getFields().getAsJsonObject().get("ObjectID").getAsString();
     }
 
     private String extractTagsNames(JsonElement tagsNameArray) {
