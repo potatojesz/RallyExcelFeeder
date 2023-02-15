@@ -116,7 +116,7 @@ public class RallyUtil {
             Map<String, RallyItem> ticketTypeMap = new HashMap<>(queryResponse.getTotalResultCount());
             JsonArray result = queryResponse.getResults();
             result.forEach(m -> ticketTypeMap.put(m.getAsJsonObject().get("FormattedID").getAsString(),
-                    new RallyItem(m.getAsJsonObject().get("FormattedID").getAsString(), m)));
+                    new RallyItem(m.getAsJsonObject().get("FormattedID").getAsString(), m, type)));
             return ticketTypeMap;
         } else {
             throw new RuntimeException(String.join(" ", queryResponse.getErrors()));
