@@ -1,5 +1,13 @@
 package com.clear2pay;
 
+import com.clear2pay.model.RallyItem;
+import com.google.gson.JsonElement;
+import org.apache.poi.common.usermodel.HyperlinkType;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.util.StringUtil;
+import org.apache.poi.xssf.usermodel.*;
+
+import java.awt.Color;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -10,16 +18,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
-
-import com.google.gson.JsonElement;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.util.StringUtil;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
-import com.clear2pay.model.RallyItem;
 
 public class ExcelUtil {
     String excelFilePath;
@@ -79,22 +77,46 @@ public class ExcelUtil {
                 if(i == 0){
                     i++;
                 } else {
-                    id = row.getCell(0).getStringCellValue().toUpperCase();
+                    Cell firstCell = row.getCell(0);
+                    id = firstCell.getStringCellValue().toUpperCase();
                     if(items.containsKey(id)) {
+                        createHyperlink(items.get(id), workbook, firstCell);
                         for(Map.Entry<Integer, String> header : headers.entrySet()) {
                             if(header.getKey() != 0) {
                                 Cell cell = row.getCell(header.getKey(), Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
-                                JsonElement jsonElement = items.get(id).getFields().getAsJsonObject().get(header.getValue());
-                                String value = jsonElement.toString();
-                                if(jsonElement.isJsonObject()) {
-                                    try {
-                                        value = jsonElement.getAsJsonObject().get("_refObjectName").toString();
-                                    } catch(Exception ex) {
-                                        System.out.println("There is no _refObjectName");
+                                if(header.getValue().equals("JSON")) {
+                                    cell.setCellValue(items.get(id).getFields().toString());
+                                } else {
+                                    JsonElement jsonElement = items.get(id).getFields().getAsJsonObject().get(header.getValue());
+                                    if (jsonElement != null) {
+                                        String value = jsonElement.toString();
+                                        if (jsonElement.isJsonObject()) {
+                                            try {
+                                                JsonElement refObjectName = jsonElement.getAsJsonObject().get("_refObjectName");
+                                                if (refObjectName != null) {
+                                                    value = refObjectName.toString();
+                                                } else {
+                                                    JsonElement tagsNameArray = jsonElement.getAsJsonObject().get("_tagsNameArray");
+                                                    if (tagsNameArray != null) {
+                                                        value = extractTagsNames(tagsNameArray);
+                                                    } else {
+                                                        JsonElement count = jsonElement.getAsJsonObject().get("Count");
+                                                        if (count != null) {
+                                                            value = count.toString();
+                                                        }
+                                                    }
+                                                }
+                                            } catch (Exception ex) {
+                                                System.out.println("_refObjectName " + ex.getClass().toString() + ": " + ex.getLocalizedMessage());
+                                            }
+                                        }
+                                        if (StringUtil.isNotBlank(value)) {
+                                            if (value.startsWith("\"") && value.endsWith("\"")) {
+                                                value = value.substring(1, value.length() - 1);
+                                            }
+                                            cell.setCellValue(value);
+                                        }
                                     }
-                                }
-                                if(StringUtil.isNotBlank(value)) {
-                                    cell.setCellValue(value);
                                 }
                             }
                         }
@@ -107,5 +129,48 @@ public class ExcelUtil {
                 workbook.write(outputStream);
             }
         }
+    }
+
+    private void createHyperlink(RallyItem rallyItem, Workbook workbook, Cell cell) {
+        XSSFWorkbook myWorkbook = (XSSFWorkbook)workbook;
+        CreationHelper helper
+                = myWorkbook.getCreationHelper();
+        XSSFCellStyle linkStyle
+                = myWorkbook.createCellStyle();
+        XSSFFont linkFont = myWorkbook.createFont();
+
+        // Setting the Link Style
+        linkFont.setUnderline(XSSFFont.U_SINGLE);
+        linkFont.setColor(Font.COLOR_RED);
+        linkStyle.setFont(linkFont);
+
+        XSSFHyperlink link
+                = (XSSFHyperlink)helper.createHyperlink(HyperlinkType.URL);
+
+        link.setAddress(getAddress(rallyItem));
+
+        cell.setHyperlink(link);
+        cell.setCellStyle(linkStyle);
+    }
+
+    private String getAddress(RallyItem rallyItem) {
+        return "https://www.youtube.com/watch?v=xm3YgoEiEDc";
+    }
+
+    private String extractTagsNames(JsonElement tagsNameArray) {
+        String result = "";
+        for(JsonElement tagName : tagsNameArray.getAsJsonArray()) {
+            if(tagName != null && tagName.isJsonObject()) {
+                JsonElement name = tagName.getAsJsonObject().get("Name");
+                if(name != null) {
+                    String nameStr = name.toString();
+                    if(nameStr.startsWith("\"") && nameStr.endsWith("\"")) {
+                        nameStr = nameStr.substring(1, nameStr.length() - 1);
+                    }
+                    result = StringUtil.isNotBlank(result) ? result + "," + nameStr : nameStr;
+                }
+            }
+        }
+        return result;
     }
 }
