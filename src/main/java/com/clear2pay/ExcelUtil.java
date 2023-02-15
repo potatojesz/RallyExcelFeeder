@@ -79,7 +79,7 @@ public class ExcelUtil {
                 } else {
                     Cell firstCell = row.getCell(0);
                     id = firstCell.getStringCellValue().toUpperCase();
-                    if(items.containsKey(id)) {
+                    if(items.containsKey(id) && StringUtil.isNotBlank(id)) {
                         createHyperlink(items.get(id), workbook, firstCell);
                         for(Map.Entry<Integer, String> header : headers.entrySet()) {
                             if(header.getKey() != 0) {
