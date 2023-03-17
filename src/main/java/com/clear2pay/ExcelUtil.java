@@ -85,7 +85,7 @@ public class ExcelUtil {
                             if(header.getKey() != 0) {
                                 Cell cell = row.getCell(header.getKey(), Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
                                 if(header.getValue().equals("JSON")) {
-                                    cell.setCellValue(items.get(id).getFields().toString());
+                                    setCellValue(cell, items.get(id).getFields().toString());
                                 } else {
                                     JsonElement jsonElement = items.get(id).getFields().getAsJsonObject().get(header.getValue());
                                     if (jsonElement != null) {
@@ -114,7 +114,7 @@ public class ExcelUtil {
                                             if (value.startsWith("\"") && value.endsWith("\"")) {
                                                 value = value.substring(1, value.length() - 1);
                                             }
-                                            cell.setCellValue(value);
+                                            setCellValue(cell, value);
                                         }
                                     }
                                 }
@@ -176,5 +176,13 @@ public class ExcelUtil {
             }
         }
         return result;
+    }
+
+    private static void setCellValue(Cell cell, String value) {
+        try {
+            cell.setCellValue(value);
+        } catch(Exception ex) {
+            System.out.println(ex.getLocalizedMessage());
+        }
     }
 }
